@@ -1,14 +1,17 @@
 import pyqtgraph as pg
 import sys
 import pyqtgraph.opengl as gl
-from numpy import *
+import functions
+import numpy as np
+import pyqtgraph.opengl as gl
 
 if __name__ == "__main__":
+
+    a = []
 
     pg.mkQApp()
 
     ## make a widget for displaying 3D objects
-    import pyqtgraph.opengl as gl
     view = gl.GLViewWidget()
     view.show()
 
@@ -29,14 +32,13 @@ if __name__ == "__main__":
     ygrid.scale(1, 1, 1)
     zgrid.scale(1, 1, 1)
 
-    X = linspace(-10,10,100)
-    Y1=2+sin(X)
-    Y2=-2+Y1*Y1
-    Z = linspace(-10,10,100)
-    p=array([X,Y2,Z])
-    # X = 
+    X  = np.linspace(-10,10,100)
+    Y1 = 2+np.sin(X)
+    Y2 = -2+Y1*Y1
+    Z  = np.linspace(-10,10,100)
+    p  = np.array([X,Y2,Z])
 
-    p=p.transpose() 
+    p = p.transpose() 
 
     C=pg.glColor('w')
 
