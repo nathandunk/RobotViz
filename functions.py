@@ -1,3 +1,6 @@
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtCore, QtGui
+import sys
 import numpy as np
 import sympy as sym
 import pyqtgraph as pg
@@ -23,6 +26,20 @@ class robot:
         self.X              = np.zeros((3,self.size+1))
         self.Y              = np.zeros((3,self.size+1))
         self.Z              = np.zeros((3,self.size+1))
+
+        self.app = QtGui.QApplication(sys.argv)
+        self.w = gl.GLViewWidget()
+
+        self.plt = gl.GLLinePlotItem(pos=np.array([self.O[0,:],self.O[1,:],self.O[2,:]]).transpose(), width=3, color=pg.glColor('w'))
+
+        self.pltx = [0]*(self.size+1)
+        self.plty = [0]*(self.size+1)
+        self.pltz = [0]*(self.size+1)
+
+        for i in range(0,self.size+1):
+            self.pltx[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.X[:,i]]), width = 5, color = pg.glColor('r'))
+            self.plty[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Y[:,i]]), width = 5, color = pg.glColor('g'))
+            self.pltz[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Z[:,i]]), width = 5, color = pg.glColor('b'))
 
         for i in self.rp_vector:
             self.add_joint(i)
@@ -58,12 +75,56 @@ class robot:
 
             self.O[:,i] = self.T_full[0:3,3]
 
-            print(self.O[:,i])
-            print(self.T_full[0:3,0])
             self.X[:,i] = self.O[:,i]+self.T_full[0:3,0]*2
             self.Y[:,i] = self.O[:,i]+self.T_full[0:3,1]*2
             self.Z[:,i] = self.O[:,i]+self.T_full[0:3,2]*2
             # print(self.T_full)
+
+    def plot3d(self):
+        self.w.opts['distance'] = 40
+        self.w.setWindowTitle('pyqtgraph awesomeness')
+        self.w.setGeometry(0, 110, 1920, 1080)
+        self.w.show()
+
+        # create the background grids
+        gx = gl.GLGridItem()
+        gx.rotate(90, 0, 1, 0)
+        self.w.addItem(gx)
+        gy = gl.GLGridItem()
+        gy.rotate(90, 1, 0, 0)
+        self.w.addItem(gy)
+        gz = gl.GLGridItem()
+        self.w.addItem(gz)
+
+        timer = QtCore.QTimer()
+        timer.timeout.connect(self.update)
+        timer.start(20)
+
+        if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+            QtGui.QApplication.instance().exec_()
+
+    def update(self):
+        
+        p = np.array([self.O[0,:],self.O[1,:],self.O[2,:]]).transpose()
+        print(p)
+        C = pg.glColor('w')
+        R = pg.glColor('r')
+        G = pg.glColor('g')
+        B = pg.glColor('b')
+
+        # self.plt = gl.GLLinePlotItem(pos=p, width=3, color=C)
+        self.plt.setData(pos=p, width=3, color=C)
+
+        for i in range(0,self.size+1):
+            x_unit = np.array([self.O[:,i],self.X[:,i]])
+            y_unit = np.array([self.O[:,i],self.Y[:,i]])
+            z_unit = np.array([self.O[:,i],self.Z[:,i]])
+            self.pltx[i].setData(pos = x_unit, width = 5, color = R)
+            self.plty[i].setData(pos = y_unit, width = 5, color = G)
+            self.pltz[i].setData(pos = z_unit, width = 5, color = B)
+            # self.w.addItem(pltx[i])
+            # self.w.addItem(plty[i])
+            # self.w.addItem(pltz[i])
 
 def create_3D_plot():
     pg.mkQApp()
