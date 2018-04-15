@@ -40,6 +40,10 @@ class robot:
             self.pltx[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.X[:,i]]), width = 5, color = pg.glColor('r'))
             self.plty[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Y[:,i]]), width = 5, color = pg.glColor('g'))
             self.pltz[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Z[:,i]]), width = 5, color = pg.glColor('b'))
+            self.w.addItem(self.pltx[i])
+            self.w.addItem(self.plty[i])
+            self.w.addItem(self.pltz[i])
+        self.w.addItem(self.plt)
 
         for i in self.rp_vector:
             self.add_joint(i)
@@ -106,7 +110,6 @@ class robot:
     def update(self):
         
         p = np.array([self.O[0,:],self.O[1,:],self.O[2,:]]).transpose()
-        print(p)
         C = pg.glColor('w')
         R = pg.glColor('r')
         G = pg.glColor('g')
@@ -122,9 +125,6 @@ class robot:
             self.pltx[i].setData(pos = x_unit, width = 5, color = R)
             self.plty[i].setData(pos = y_unit, width = 5, color = G)
             self.pltz[i].setData(pos = z_unit, width = 5, color = B)
-            # self.w.addItem(pltx[i])
-            # self.w.addItem(plty[i])
-            # self.w.addItem(pltz[i])
 
 def create_3D_plot():
     pg.mkQApp()
