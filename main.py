@@ -14,15 +14,15 @@ if __name__ == "__main__":
     l2 = 20
     l3 = 20
     # link            1    2         3
-    # alpha    = np.array([0,        np.pi/2,  0,      0])
-    # a        = np.array([0,        0,        l1,     l2])
-    # d        = np.array([0,        0,        0,      0])
-    # theta    = np.array([theta1,   theta2,   theta3, 0])
-    # link            1    2         3
     alpha    = np.array([0,        np.pi/2,  0,      0])
-    a        = np.array([0,        l1,       l2,     l3])
+    a        = np.array([0,        0,        l1,     l2])
     d        = np.array([0,        0,        0,      0])
     theta    = np.array([theta1,   theta2,   theta3, 0])
+    # link            1    2         3
+    # alpha    = np.array([0,        np.pi/2,  0,      0])
+    # a        = np.array([0,        l1,       l2,     l3])
+    # d        = np.array([0,        0,        0,      0])
+    # theta    = np.array([theta1,   theta2,   theta3, 0])
 
     my_robot = robot('rrr')
     my_robot.dh(alpha,a,d,theta)
