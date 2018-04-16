@@ -1,10 +1,13 @@
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 import sys
 import numpy as np
 import sympy as sym
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
+from pyqtgraph.dockarea import *
 
 # Define the robot class
 class robot:
@@ -27,23 +30,9 @@ class robot:
         self.Y              = np.zeros((3,self.size+1))
         self.Z              = np.zeros((3,self.size+1))
 
-        self.app = QtGui.QApplication(sys.argv)
-        self.w = gl.GLViewWidget()
-
-        self.plt = gl.GLLinePlotItem(pos=np.array([self.O[0,:],self.O[1,:],self.O[2,:]]).transpose(), width=3, color=pg.glColor('w'))
-
         self.pltx = [0]*(self.size+1)
         self.plty = [0]*(self.size+1)
         self.pltz = [0]*(self.size+1)
-
-        for i in range(0,self.size+1):
-            self.pltx[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.X[:,i]]), width = 5, color = pg.glColor('r'))
-            self.plty[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Y[:,i]]), width = 5, color = pg.glColor('g'))
-            self.pltz[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Z[:,i]]), width = 5, color = pg.glColor('b'))
-            self.w.addItem(self.pltx[i])
-            self.w.addItem(self.plty[i])
-            self.w.addItem(self.pltz[i])
-        self.w.addItem(self.plt)
 
         for i in self.rp_vector:
             self.add_joint(i)
@@ -85,24 +74,64 @@ class robot:
             # print(self.T_full)
 
     def plot3d(self):
-        self.w.opts['distance'] = 40
-        self.w.setWindowTitle('pyqtgraph awesomeness')
-        self.w.setGeometry(0, 110, 1920, 1080)
-        self.w.show()
+
+        self.app = QtGui.QApplication(sys.argv)
+        self.win = QtGui.QMainWindow()
+        self.area = DockArea()
+        self.win.setCentralWidget(self.area)
+        self.win.resize(1920,1080)
+
+        self.d1 = Dock("Angles", size=(1, 1))
+        self.d2 = Dock("3D Plot", size=(800,800))
+        self.area.addDock(self.d1,'left')
+        self.area.addDock(self.d2,'right')
+
+        self.w1 = pg.LayoutWidget()
+        self.saveBtn = QtGui.QPushButton('Save state')
+
+        self.theta1_ = QLineEdit()
+        self.theta2_ = QLineEdit()
+        self.theta3_ = QLineEdit()
+
+        self.w1.addWidget(self.theta1_, row=0, col=1)
+        self.w1.addWidget(self.theta2_, row=0, col=2)
+        self.w1.addWidget(self.theta3_, row=0, col=3)
+        self.w1.addWidget(self.saveBtn, row=1, col=0)
+        self.d1.addWidget(self.w1)
+
+
+
+        self.w2 = gl.GLViewWidget()
 
         # create the background grids
         gx = gl.GLGridItem()
         gx.rotate(90, 0, 1, 0)
-        self.w.addItem(gx)
+        self.w2.addItem(gx)
         gy = gl.GLGridItem()
         gy.rotate(90, 1, 0, 0)
-        self.w.addItem(gy)
+        self.w2.addItem(gy)
         gz = gl.GLGridItem()
-        self.w.addItem(gz)
+        self.w2.addItem(gz)
+
+        self.plt = gl.GLLinePlotItem(pos=np.array([self.O[0,:],self.O[1,:],self.O[2,:]]).transpose(), width=3, color=pg.glColor('w'))
+        self.w2.opts['distance'] = 200
+        for i in range(0,self.size+1):
+            self.pltx[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.X[:,i]]), width = 5, color = pg.glColor('r'))
+            self.plty[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Y[:,i]]), width = 5, color = pg.glColor('g'))
+            self.pltz[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Z[:,i]]), width = 5, color = pg.glColor('b'))
+            self.w2.addItem(self.pltx[i])
+            self.w2.addItem(self.plty[i])
+            self.w2.addItem(self.pltz[i])
+
+        self.w2.addItem(self.plt)
+
+        self.d2.addWidget(self.w2)
 
         timer = QtCore.QTimer()
         timer.timeout.connect(self.update)
         timer.start(20)
+
+        self.win.show()
 
         if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
             QtGui.QApplication.instance().exec_()

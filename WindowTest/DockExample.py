@@ -29,7 +29,7 @@ app = QtGui.QApplication([])
 win = QtGui.QMainWindow()
 area = DockArea()
 win.setCentralWidget(area)
-win.resize(1000,500)
+win.resize(1920,1080)
 win.setWindowTitle('pyqtgraph example: dockarea')
 
 ## Create docks, place them into the window one at a time.
