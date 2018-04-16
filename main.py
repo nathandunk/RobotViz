@@ -28,7 +28,7 @@ if __name__ == "__main__":
     my_robot.dh(alpha,a,d,theta)
 
     my_robot.joint_values = [0,np.pi/2,np.pi/4, 0]
-    my_robot.dhtf(my_robot.alpha,my_robot.a,my_robot.d,my_robot.joint_values)
+    my_robot.dhtf()
 
     my_robot.plot3d()
     # time.sleep(2)
