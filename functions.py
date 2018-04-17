@@ -77,9 +77,9 @@ class robot:
 
             self.O[:,i] = self.T_full[0:3,3]
 
-            self.X[:,i] = self.O[:,i]+self.T_full[0:3,0]*5
-            self.Y[:,i] = self.O[:,i]+self.T_full[0:3,1]*5
-            self.Z[:,i] = self.O[:,i]+self.T_full[0:3,2]*5
+            self.X[:,i] = self.O[:,i]+self.T_full[0:3,0]*10
+            self.Y[:,i] = self.O[:,i]+self.T_full[0:3,1]*10
+            self.Z[:,i] = self.O[:,i]+self.T_full[0:3,2]*10
             # print(self.T_full)
 
     def plot3d(self):
@@ -88,19 +88,26 @@ class robot:
         self.win = QtGui.QMainWindow()
         self.area = DockArea()
         self.win.setCentralWidget(self.area)
-        self.win.resize(1920,1000)
+        self.win.resize(800,450)
 
-        self.d1 = Dock("Angles", size=(800, 800))
+        self.d1 = Dock("Forward Kinematics", size=(200, 200))
         self.d2 = Dock("3D Plot", size=(800,800))
+        self.d3 = Dock("Inverse Kinematics", size=(200,200))
         self.area.addDock(self.d1,'left')
         self.area.addDock(self.d2,'right')
+        self.area.addDock(self.d3,'bottom',self.d1)
+
+        self.newfont = QtGui.QFont("Helvetica", 12, QtGui.QFont.Bold) 
 
         self.w1 = pg.LayoutWidget()
-        self.saveBtn = QtGui.QPushButton('Save state')
+        self.saveBtn = QtGui.QPushButton('Forward')
 
-        self.label_theta1_ = QtGui.QLabel("theta1")
-        self.label_theta2_ = QtGui.QLabel("theta2")
-        self.label_theta3_ = QtGui.QLabel("theta3")
+        self.label_theta1_ = QtGui.QLabel("Theta 1")
+        self.label_theta1_.setFont(self.newfont)
+        self.label_theta2_ = QtGui.QLabel("Theta 2")
+        self.label_theta2_.setFont(self.newfont)
+        self.label_theta3_ = QtGui.QLabel("Theta 3")
+        self.label_theta3_.setFont(self.newfont)
 
         self.theta1_ = QLineEdit()
         self.theta2_ = QLineEdit()
@@ -117,7 +124,34 @@ class robot:
 
         self.d1.addWidget(self.w1)
 
+        self.w3 = pg.LayoutWidget()
+        self.saveBtn = QtGui.QPushButton('Inverse')
+
+        self.label_x = QtGui.QLabel("X Value")
+        self.label_x.setFont(self.newfont)
+        self.label_y = QtGui.QLabel("Y Value")
+        self.label_y.setFont(self.newfont)
+        self.label_z = QtGui.QLabel("Z Value")
+        self.label_z.setFont(self.newfont)
+
+        self.x_ = QLineEdit()
+        self.y_ = QLineEdit()
+        self.z_ = QLineEdit()
+
+        self.w3.addWidget(self.label_x, row=0, col=0)
+        self.w3.addWidget(self.x_, row=0, col=1)
+        self.w3.addWidget(self.label_y, row=1, col=0)
+        self.w3.addWidget(self.y_, row=1, col=1)
+        self.w3.addWidget(self.label_z, row=2, col=0)
+        self.w3.addWidget(self.z_, row=2, col=1)
+        self.w3.addWidget(self.saveBtn, row=3, col=1)
+        self.saveBtn.clicked.connect(self.capture_angles)
+
+        self.d3.addWidget(self.w3)
+
         self.w2 = gl.GLViewWidget()
+        self.w2.orbit(-135,0)
+        self.w2.pan(0, 100, 0)
 
         # create the background grids
         # gx = gl.GLGridItem()
@@ -132,11 +166,11 @@ class robot:
         self.w2.addItem(gz)
 
         self.plt = gl.GLLinePlotItem(pos=np.array([self.O[0,:],self.O[1,:],self.O[2,:]]).transpose(), width=3, color=pg.glColor('w'))
-        self.w2.opts['distance'] = 200
+        self.w2.opts['distance'] = 600
         for i in range(0,self.size+1):
-            self.pltx[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.X[:,i]]), width = 5, color = pg.glColor('r'))
-            self.plty[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Y[:,i]]), width = 5, color = pg.glColor('g'))
-            self.pltz[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Z[:,i]]), width = 5, color = pg.glColor('b'))
+            self.pltx[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.X[:,i]]), width = 3, color = pg.glColor('r'))
+            self.plty[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Y[:,i]]), width = 3, color = pg.glColor('g'))
+            self.pltz[i] = gl.GLLinePlotItem(pos = np.array([self.O[:,i],self.Z[:,i]]), width = 3, color = pg.glColor('b'))
             self.w2.addItem(self.pltx[i])
             self.w2.addItem(self.plty[i])
             self.w2.addItem(self.pltz[i])
@@ -170,23 +204,23 @@ class robot:
             x_unit = np.array([self.O[:,i],self.X[:,i]])
             y_unit = np.array([self.O[:,i],self.Y[:,i]])
             z_unit = np.array([self.O[:,i],self.Z[:,i]])
-            self.pltx[i].setData(pos = x_unit, width = 5, color = R)
-            self.plty[i].setData(pos = y_unit, width = 5, color = G)
-            self.pltz[i].setData(pos = z_unit, width = 5, color = B)
+            self.pltx[i].setData(pos = x_unit, width = 3, color = R)
+            self.plty[i].setData(pos = y_unit, width = 3, color = G)
+            self.pltz[i].setData(pos = z_unit, width = 3, color = B)
 
     def capture_angles(self):
         self.joint_values_d[0] = int(self.theta1_.text())/180.0*np.pi
         self.joint_values_d[1] = int(self.theta2_.text())/180.0*np.pi+np.pi/2
         self.joint_values_d[2] = int(self.theta3_.text())/180.0*np.pi
         # print(self.joint_values_d-[0, np.pi/2, 0])
-        # try:
-        self.write_serial(self.joint_values_d-[0, np.pi/2, 0])
-        # except AttributeError as e:
-        #     print("Still no serial port...lol")
-        # else:
-        #     pass
-        # finally:
-        #     pass
+        try:
+            self.write_serial(self.joint_values_d-[0, np.pi/2, 0])
+        except AttributeError as e:
+            print("Still no serial port...lol")
+        else:
+            pass
+        finally:
+            pass
         
 
         thread.start_new_thread(self.sweep, ())
