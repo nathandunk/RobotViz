@@ -11,6 +11,7 @@ from pyqtgraph.dockarea import *
 import serial
 import time
 import thread
+import qdarkstyle
 
 # Define the robot class
 class robot:
@@ -90,6 +91,9 @@ class robot:
         self.win.setCentralWidget(self.area)
         self.win.resize(800,450)
 
+        self.dark_stylesheet = qdarkstyle.load_stylesheet_pyqt()
+        self.app.setStyleSheet(self.dark_stylesheet)
+
         self.d1 = Dock("Forward Kinematics", size=(200, 200))
         self.d2 = Dock("3D Plot", size=(800,800))
         self.d3 = Dock("Inverse Kinematics", size=(200,200))
@@ -145,13 +149,14 @@ class robot:
         self.w3.addWidget(self.label_z, row=2, col=0)
         self.w3.addWidget(self.z_, row=2, col=1)
         self.w3.addWidget(self.saveBtn, row=3, col=1)
-        self.saveBtn.clicked.connect(self.capture_angles)
+        self.saveBtn.clicked.connect(self.IK)
 
         self.d3.addWidget(self.w3)
 
         self.w2 = gl.GLViewWidget()
-        self.w2.orbit(-135,0)
-        self.w2.pan(0, 100, 0)
+        # self.w2.orbit(-135,0)
+        self.w2.orbit(45,0)
+        self.w2.pan(0, -100, 0)
 
         # create the background grids
         # gx = gl.GLGridItem()
@@ -176,6 +181,9 @@ class robot:
             self.w2.addItem(self.pltz[i])
 
         self.w2.addItem(self.plt)
+        self.pos = [self.O[0,-1],self.O[1,-1],self.O[2,-1]]
+        self.pos_pt = gl.GLScatterPlotItem(pos = np.array(self.pos), size = 0,  color = pg.glColor('y'))
+        self.w2.addItem(self.pos_pt)
 
         self.d2.addWidget(self.w2)
 
@@ -212,7 +220,7 @@ class robot:
         self.joint_values_d[0] = int(self.theta1_.text())/180.0*np.pi
         self.joint_values_d[1] = int(self.theta2_.text())/180.0*np.pi+np.pi/2
         self.joint_values_d[2] = int(self.theta3_.text())/180.0*np.pi
-        # print(self.joint_values_d-[0, np.pi/2, 0])
+        self.pos_pt.setData(pos = np.array([0,0,0]), size = 0, color = pg.glColor('y'))
         try:
             self.write_serial(self.joint_values_d-[0, np.pi/2, 0])
         except AttributeError as e:
@@ -221,7 +229,40 @@ class robot:
             pass
         finally:
             pass
-        
+
+        thread.start_new_thread(self.sweep, ())
+
+
+    def IK(self):
+        x = float(self.x_.text())
+        y = float(self.y_.text())
+        z = float(self.z_.text())
+        self.pos_pt.setData(pos = np.array([x,y,z]), size = 10, color = pg.glColor('y'))
+
+        theta1_ = np.arctan2(y,x)+np.pi
+
+        xp = x*np.cos(theta1_)+y*np.sin(theta1_)
+
+        cos_theta3 = (xp**2+z**2-self.l1**2-self.l2**2)/(2*self.l1*self.l2)
+        theta3_ = np.arctan2(np.sqrt(1-cos_theta3**2),cos_theta3)
+
+        beta = np.arctan2(z,xp)
+        cos_psi = (xp**2+z**2+self.l1**2-self.l2**2)/(2*self.l1*np.sqrt(xp**2+z**2))
+        psi = np.arctan2(np.sqrt(1-cos_psi**2),cos_psi)
+        theta2_ = beta - psi - np.pi/2
+
+        self.joint_values_d[0] = theta1_
+        self.joint_values_d[1] = theta2_+np.pi/2
+        self.joint_values_d[2] = theta3_
+
+        try:
+            self.write_serial(self.joint_values_d-[0, np.pi/2, 0])
+        except AttributeError as e:
+            print("Still no serial port...lol")
+        else:
+            pass
+        finally:
+            pass
 
         thread.start_new_thread(self.sweep, ())
 
@@ -229,7 +270,7 @@ class robot:
         for i in range(0,self.size):
             if self.joint_values[i] < self.joint_values_d[i]: 
                 dir = 1
-            else: 
+            else:
                 dir = -1
 
             while self.joint_values[i]*dir < self.joint_values_d[i]*dir:

@@ -5,7 +5,7 @@ import pyqtgraph.opengl as gl
 from functions import *
 import numpy as np
 import time
-import sympy as s
+import sympy as sym
 
 if __name__ == "__main__":
 
@@ -14,17 +14,19 @@ if __name__ == "__main__":
     l2 = 91.75
     l3 = 100
     # link                         1         2       3
-    alpha    = np.array([0,        np.pi/2,  0,      0])
-    a        = np.array([0,        0,        l1,     l2])
-    d        = np.array([0,        0,        0,      0])
-    theta    = np.array([theta1,   theta2+np.pi/2,   theta3, 0])
-    # link                 1         2         3       4
     # alpha    = np.array([0,        np.pi/2,  0,      0])
-    # a        = np.array([0,        l1,       l2,     l3])
+    # a        = np.array([0,        0,        l1,     l2])
     # d        = np.array([0,        0,        0,      0])
-    # theta    = np.array([theta1,   theta2,   theta3, 0])
+    # theta    = np.array([theta1,   theta2+np.pi/2,   theta3, 0])
+    # link                 1         2         3       4
+    alpha    = np.array([0,        np.pi/2,  0,      0])
+    a        = np.array([0,        l1,       l2,     l3])
+    d        = np.array([0,        0,        0,      0])
+    theta    = np.array([theta1,   theta2,   theta3, 0])
 
     my_robot = robot('rrr')
+    my_robot.l1 = l1
+    my_robot.l2 = l2
     my_robot.dh(alpha,a,d,theta)
 
     my_robot.set_joint_values([0,0,0])
