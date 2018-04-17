@@ -34,7 +34,7 @@ class robot:
         self.theta          = np.zeros(self.size)
         self.T              = np.zeros((4,4,self.size))
         self.T_full         = np.zeros((4,4))
-        self.joint_values   = np.zeros(self.size)
+        self.joint_values   = np.zeros(self.size+1)
         self.joint_values_d = np.zeros(self.size)
 
         self.O              = np.zeros((3,self.size+1))
@@ -65,10 +65,6 @@ class robot:
 
     def dhtf(self):
 
-        # theta.subs(theta1,joint_values(1))
-        # theta.subs(theta2,joint_values(2))
-        # theta.subs(theta3,joint_values(3))
-
         self.T_full = np.identity(4)
         for i in range(0,self.size+1):
             T_hold = np.array([[np.cos(self.joint_values[i]),    -np.sin(self.joint_values[i]),                   0,                 self.a[i]],
@@ -81,9 +77,9 @@ class robot:
 
             self.O[:,i] = self.T_full[0:3,3]
 
-            self.X[:,i] = self.O[:,i]+self.T_full[0:3,0]*2
-            self.Y[:,i] = self.O[:,i]+self.T_full[0:3,1]*2
-            self.Z[:,i] = self.O[:,i]+self.T_full[0:3,2]*2
+            self.X[:,i] = self.O[:,i]+self.T_full[0:3,0]*5
+            self.Y[:,i] = self.O[:,i]+self.T_full[0:3,1]*5
+            self.Z[:,i] = self.O[:,i]+self.T_full[0:3,2]*5
             # print(self.T_full)
 
     def plot3d(self):
@@ -124,13 +120,15 @@ class robot:
         self.w2 = gl.GLViewWidget()
 
         # create the background grids
-        gx = gl.GLGridItem()
-        gx.rotate(90, 0, 1, 0)
-        self.w2.addItem(gx)
-        gy = gl.GLGridItem()
-        gy.rotate(90, 1, 0, 0)
-        self.w2.addItem(gy)
+        # gx = gl.GLGridItem()
+        # gx.rotate(90, 0, 1, 0)
+        # self.w2.addItem(gx)
+        # gy = gl.GLGridItem()
+        # gy.rotate(90, 1, 0, 0)
+        # self.w2.addItem(gy)
         gz = gl.GLGridItem()
+        gz.setSize(200,200,200)
+        gz.setSpacing(10,10,10)
         self.w2.addItem(gz)
 
         self.plt = gl.GLLinePlotItem(pos=np.array([self.O[0,:],self.O[1,:],self.O[2,:]]).transpose(), width=3, color=pg.glColor('w'))
@@ -178,16 +176,17 @@ class robot:
 
     def capture_angles(self):
         self.joint_values_d[0] = int(self.theta1_.text())/180.0*np.pi
-        self.joint_values_d[1] = int(self.theta2_.text())/180.0*np.pi
+        self.joint_values_d[1] = int(self.theta2_.text())/180.0*np.pi+np.pi/2
         self.joint_values_d[2] = int(self.theta3_.text())/180.0*np.pi
-        try:
-            self.write_serial(self.joint_values_d)
-        except AttributeError as e:
-            print("Still no serial port...lol")
-        else:
-            pass
-        finally:
-            pass
+        # print(self.joint_values_d-[0, np.pi/2, 0])
+        # try:
+        self.write_serial(self.joint_values_d-[0, np.pi/2, 0])
+        # except AttributeError as e:
+        #     print("Still no serial port...lol")
+        # else:
+        #     pass
+        # finally:
+        #     pass
         
 
         thread.start_new_thread(self.sweep, ())
@@ -204,11 +203,19 @@ class robot:
                 self.dhtf()
                 self.update()
                 # print("20")
-                time.sleep(0.02)
+                time.sleep(0.015)
 
     def write_serial(self,joint_vals):
         for angle in joint_vals:
-            self.ser.write(angle.zfill(3));
+            angle_deg = rad2deg(angle)
+            angle_deg_adj = str(int(angle_deg+90))
+            self.ser.write(angle_deg_adj.zfill(3))
+
+    def set_joint_values(self,joint_vals):
+        self.joint_values[0] = joint_vals[0]
+        self.joint_values[1] = joint_vals[1]+np.pi/2
+        self.joint_values[2] = joint_vals[2]
+        self.joint_values[3] = 0
 
 def rad2deg(angle_rad):
     return angle_rad*180/np.pi
